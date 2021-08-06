@@ -12,7 +12,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-var Version string = "v1.0.0"
+var Version string = "v1.0.1"
 
 func main() {
 	cmd.StartFlags()
@@ -22,6 +22,8 @@ func main() {
 		devEnv = "development"
 		stgEnv = "staging"
 		prdEnv = "production"
+
+		gomodfilename = "go.mod"
 	)
 
 	if cmd.BuildVersion {
@@ -40,22 +42,21 @@ func main() {
 		log.Fatalln("go.mod path not found")
 	}
 
-	if len(cmd.FilePath) == 0 {
-		log.Fatalln("Domain value not found")
-	}
-
 	if (env == cmpEnv || env == stgEnv) && len(cmd.Branch) == 0 {
 		log.Fatalln("Branch value is required")
 	}
 
-	fileName := fmt.Sprintf("%s/go.mod", cmd.FilePath)
+	fileName := gomodfilename
+	if len(cmd.FileName) > 0 {
+		fileName = cmd.FileName
+	}
 
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to read file %s: %w", fileName, err))
 	}
 
-	file, err := modfile.Parse("go.mod", data, nil)
+	file, err := modfile.Parse(gomodfilename, data, nil)
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to parse file %s: %w", fileName, err))
 	}

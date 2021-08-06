@@ -14,7 +14,7 @@ var (
 	Debug        bool
 	Domain       string
 	Environment  string
-	FilePath     string
+	FileName     string
 	Remove       bool
 	Version      bool
 )
@@ -23,7 +23,7 @@ func init() {
 	flag.StringVarP(&Branch, "branch", "b", "", "project branch")
 	flag.BoolVarP(&Debug, "debug", "d", false, "replace to use with local debug")
 	flag.StringVarP(&Domain, "domain", "D", "", "project domain")
-	flag.StringVarP(&FilePath, "file", "f", "", "go.mod file path")
+	flag.StringVarP(&FileName, "file", "f", "", "go.mod file path")
 	flag.BoolVarP(&Remove, "remove", "r", false, "remove all replaces")
 	flag.BoolVarP(&Version, "version", "v", false, "show version")
 

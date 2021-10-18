@@ -12,7 +12,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-var Version string = "v1.0.4"
+var Version string = "v1.0.5"
 
 func main() {
 	cmd.StartFlags()
@@ -41,6 +41,10 @@ func main() {
 
 	if !cmd.Remove && len(cmd.Domain) == 0 {
 		log.Fatalln("go.mod path not found")
+	}
+
+	if len(env) == 0 {
+		log.Fatalln("Environment value is required")
 	}
 
 	if (env == cmpEnv || env == stgEnv || env == demEnv) && len(cmd.Branch) == 0 {

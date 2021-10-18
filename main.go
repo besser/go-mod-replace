@@ -12,7 +12,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-var Version string = "v1.0.3"
+var Version string = "v1.0.4"
 
 func main() {
 	cmd.StartFlags()
@@ -21,6 +21,7 @@ func main() {
 		cmpEnv = "compose"
 		devEnv = "development"
 		stgEnv = "staging"
+		demEnv = "demo"
 		prdEnv = "production"
 
 		gomodfilename = "go.mod"
@@ -42,7 +43,7 @@ func main() {
 		log.Fatalln("go.mod path not found")
 	}
 
-	if (env == cmpEnv || env == stgEnv) && len(cmd.Branch) == 0 {
+	if (env == cmpEnv || env == stgEnv || env == demEnv) && len(cmd.Branch) == 0 {
 		log.Fatalln("Branch value is required")
 	}
 
@@ -72,7 +73,7 @@ func main() {
 				if env == devEnv || cmd.Debug {
 					debugPath := strings.ReplaceAll(req.Mod.Path, cmd.Domain, "./..")
 					file.AddReplace(req.Mod.Path, "", debugPath, "")
-				} else if env == cmpEnv || env == stgEnv || len(cmd.Branch) > 0 {
+				} else if env == cmpEnv || env == stgEnv || env == demEnv || len(cmd.Branch) > 0 {
 					file.AddReplace(req.Mod.Path, "", req.Mod.Path, cmd.Branch)
 				}
 			}

@@ -2,29 +2,29 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
 	"strings"
 
-	"github.com/besser/go-mod-replace/cmd"
+	"bitbucket.org/supplylabsteam/go-mod-replace/cmd"
+	"bitbucket.org/supplylabsteam/go-mod-replace/git"
+
 	"golang.org/x/mod/modfile"
 )
 
-var Version string = "v1.0.5"
+var Version string = "v1.2.0"
 
 func main() {
 	cmd.StartFlags()
 
 	const (
-		cmpEnv = "compose"
-		devEnv = "development"
-		stgEnv = "staging"
-		demEnv = "demo"
-		prdEnv = "production"
+		DEV_ENV = "dev"
+		STG_ENV = "stg"
+		HML_ENV = "hml"
+		PRD_ENV = "prd"
 
-		gomodfilename = "go.mod"
+		GOMODULEFILE = "go.mod"
 	)
 
 	if cmd.BuildVersion {
@@ -47,21 +47,21 @@ func main() {
 		log.Fatalln("Environment value is required")
 	}
 
-	if (env == cmpEnv || env == stgEnv || env == demEnv) && len(cmd.Branch) == 0 {
+	if env == STG_ENV && len(cmd.Branch) == 0 {
 		log.Fatalln("Branch value is required")
 	}
 
-	fileName := gomodfilename
+	fileName := GOMODULEFILE
 	if len(cmd.FileName) > 0 {
 		fileName = cmd.FileName
 	}
 
-	data, err := ioutil.ReadFile(fileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to read file %s: %w", fileName, err))
 	}
 
-	file, err := modfile.Parse(gomodfilename, data, nil)
+	file, err := modfile.Parse(fileName, data, nil)
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to parse file %s: %w", fileName, err))
 	}
@@ -71,14 +71,36 @@ func main() {
 		file.DropReplace(replace.Old.Path, replace.Old.Version)
 	}
 
-	if env != prdEnv && !cmd.Remove {
+	if !cmd.Remove {
 		for _, req := range file.Require {
 			if strings.Contains(req.Mod.Path, cmd.Domain) {
-				if env == devEnv || cmd.Debug {
+				switch env {
+				// DEVELOPMENT
+				case DEV_ENV:
 					debugPath := strings.ReplaceAll(req.Mod.Path, cmd.Domain, "./..")
 					file.AddReplace(req.Mod.Path, "", debugPath, "")
-				} else if env == cmpEnv || env == stgEnv || env == demEnv || len(cmd.Branch) > 0 {
+
+				// STAGING or HOMOLOG
+				case STG_ENV, HML_ENV:
 					file.AddReplace(req.Mod.Path, "", req.Mod.Path, cmd.Branch)
+
+				// PRODUCTION
+				case PRD_ENV:
+					repoCommon := fmt.Sprintf("https://x-token-auth:%s@%s", strings.ReplaceAll(cmd.Token, "\"", ""), req.Mod.Path)
+
+					r, err := git.GetRepo(repoCommon)
+					if err != nil {
+						log.Fatal(fmt.Errorf("failed to open '%s' repo: %w", repoCommon, err))
+					}
+
+					latestTagName, err := git.GetLatestTagFromRepository(r)
+					if err != nil {
+						log.Fatal(fmt.Errorf("failed to get latest tag from 'commons' repo: %w", err))
+					}
+
+					if err := file.AddRequire(req.Mod.Path, latestTagName); err != nil {
+						log.Fatal(fmt.Errorf("failed to add '%s' to go.mod: %w", req.Mod.Path, err))
+					}
 				}
 			}
 		}
@@ -93,5 +115,9 @@ func main() {
 
 	if e := os.WriteFile(fileName, newData, 0600); e != nil {
 		log.Fatal(fmt.Errorf("failed to write file %s: %w", fileName, e))
+	}
+
+	if cmd.Show {
+		log.Println(string(newData))
 	}
 }

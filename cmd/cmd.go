@@ -11,21 +11,23 @@ import (
 var (
 	Branch       string
 	BuildVersion bool
-	Debug        bool
 	Domain       string
 	Environment  string
 	FileName     string
 	Remove       bool
+	Token        string
+	Show         bool
 	Version      bool
 )
 
 func init() {
 	flag.StringVarP(&Branch, "branch", "b", "", "project branch")
-	flag.BoolVarP(&Debug, "debug", "d", false, "replace to use with local debug")
 	flag.StringVarP(&Domain, "domain", "D", "", "project domain")
 	flag.StringVarP(&Environment, "env", "e", "", "environment deploy")
 	flag.StringVarP(&FileName, "file", "f", "", "go.mod file path")
 	flag.BoolVarP(&Remove, "remove", "r", false, "remove all replaces")
+	flag.BoolVarP(&Show, "show", "s", false, "show go.mod")
+	flag.StringVarP(&Token, "token", "t", "", "token authentication")
 	flag.BoolVarP(&Version, "version", "v", false, "show version")
 
 	// hidden params

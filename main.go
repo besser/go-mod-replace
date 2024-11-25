@@ -13,7 +13,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-var Version string = "v1.2.0"
+var Version string = "v1.2.1"
 
 func main() {
 	cmd.StartFlags()
@@ -43,7 +43,7 @@ func main() {
 		log.Fatalln("go.mod path not found")
 	}
 
-	if len(env) == 0 {
+	if !cmd.Remove && len(env) == 0 {
 		log.Fatalln("Environment value is required")
 	}
 
@@ -51,38 +51,38 @@ func main() {
 		log.Fatalln("Branch value is required")
 	}
 
-	fileName := GOMODULEFILE
+	goModFileName := GOMODULEFILE
 	if len(cmd.FileName) > 0 {
-		fileName = cmd.FileName
+		goModFileName = cmd.FileName
 	}
 
-	data, err := os.ReadFile(fileName)
+	data, err := os.ReadFile(goModFileName)
 	if err != nil {
-		log.Fatal(fmt.Errorf("failed to read file %s: %w", fileName, err))
+		log.Fatal(fmt.Errorf("failed to read file %s: %w", goModFileName, err))
 	}
 
-	file, err := modfile.Parse(fileName, data, nil)
+	modFile, err := modfile.Parse(goModFileName, data, nil)
 	if err != nil {
-		log.Fatal(fmt.Errorf("failed to parse file %s: %w", fileName, err))
+		log.Fatal(fmt.Errorf("failed to parse file %s: %w", goModFileName, err))
 	}
 
 	// cleanup replaces
-	for _, replace := range file.Replace {
-		file.DropReplace(replace.Old.Path, replace.Old.Version)
+	for _, replace := range modFile.Replace {
+		modFile.DropReplace(replace.Old.Path, replace.Old.Version)
 	}
 
 	if !cmd.Remove {
-		for _, req := range file.Require {
+		for _, req := range modFile.Require {
 			if strings.Contains(req.Mod.Path, cmd.Domain) {
 				switch env {
 				// DEVELOPMENT
 				case DEV_ENV:
 					debugPath := strings.ReplaceAll(req.Mod.Path, cmd.Domain, "./..")
-					file.AddReplace(req.Mod.Path, "", debugPath, "")
+					modFile.AddReplace(req.Mod.Path, "", debugPath, "")
 
 				// STAGING or HOMOLOG
 				case STG_ENV, HML_ENV:
-					file.AddReplace(req.Mod.Path, "", req.Mod.Path, cmd.Branch)
+					modFile.AddReplace(req.Mod.Path, "", req.Mod.Path, cmd.Branch)
 
 				// PRODUCTION
 				case PRD_ENV:
@@ -98,7 +98,7 @@ func main() {
 						log.Fatal(fmt.Errorf("failed to get latest tag from 'commons' repo: %w", err))
 					}
 
-					if err := file.AddRequire(req.Mod.Path, latestTagName); err != nil {
+					if err := modFile.AddRequire(req.Mod.Path, latestTagName); err != nil {
 						log.Fatal(fmt.Errorf("failed to add '%s' to go.mod: %w", req.Mod.Path, err))
 					}
 				}
@@ -106,15 +106,15 @@ func main() {
 		}
 	}
 
-	file.Cleanup()
+	modFile.Cleanup()
 
-	newData, err := file.Format()
+	newData, err := modFile.Format()
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to format file: %w", err))
 	}
 
-	if e := os.WriteFile(fileName, newData, 0600); e != nil {
-		log.Fatal(fmt.Errorf("failed to write file %s: %w", fileName, e))
+	if e := os.WriteFile(goModFileName, newData, 0600); e != nil {
+		log.Fatal(fmt.Errorf("failed to write file %s: %w", goModFileName, e))
 	}
 
 	if cmd.Show {

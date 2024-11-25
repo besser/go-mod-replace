@@ -13,7 +13,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-var Version string = "v1.2.1"
+var Version string = "v1.2.2"
 
 func main() {
 	cmd.StartFlags()

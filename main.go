@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"bitbucket.org/supplylabsteam/go-mod-replace/cmd"
-	"bitbucket.org/supplylabsteam/go-mod-replace/git"
+	"github.com/besser/go-mod-replace/cmd"
+	"github.com/besser/go-mod-replace/git"
 
 	"golang.org/x/mod/modfile"
 )

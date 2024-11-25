@@ -1,4 +1,4 @@
-module bitbucket.org/supplylabsteam/go-mod-replace
+module github.com/besser/go-mod-replace
 
 go 1.23
 

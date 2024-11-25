@@ -1,3 +1,4 @@
 \.vscode/
 go-mod-replace
+gomodreplace
 .tool-versions
